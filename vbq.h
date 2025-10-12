@@ -528,25 +528,24 @@ static unsigned int vbq_psychoacoustic_model(long *magnitudes, unsigned int samp
         50596, // 22khz
         64000,
     };
-    /* Frequency response of linear interpolation These based off of
-     * experimental data, but in the future will likely be replaced by sinc^2 */
+    /* Frequency response of linear interpolation, sinc^2 */
     static const int mirror_mults[] = {
-        337,
-        309,
-        302,
-        275,
-        249,
-        224,
-        188,
-        161,
-        135,
-        106,
-        80,
-        57,
-        37,
-        22,
-        9,
-        2,
+        415,
+        364,
+        315,
+        270,
+        227,
+        187,
+        152,
+        120,
+        92,
+        68,
+        49,
+        32,
+        20,
+        11,
+        4,
+        1,
         0,
     };
 
