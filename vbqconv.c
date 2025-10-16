@@ -356,7 +356,7 @@ int main(int argc, char **argv) {
 			QOACONV_ABORT("qoaconv was not compiled with a FLAC decoder (QOACONV_HAS_DRFLAC)");
 		#endif
 	}
-	else if (QOACONV_STR_ENDS_WITH(argv[1], ".qoa")) {
+	else if (QOACONV_STR_ENDS_WITH(argv[1], ".qoa") || QOACONV_STR_ENDS_WITH(argv[1], ".vbq")) {
 		sample_data = vbq_read(argv[1], &desc);
 	}
 	else {
