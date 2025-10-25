@@ -502,31 +502,29 @@ static void vbq_fft(const short *sample_data, unsigned int channels, unsigned in
 
 static unsigned int vbq_psychoacoustic_model(long *magnitudes, unsigned int samplerate, vbq_encoder *vbq) {
     /* Created from ISO 226:2023, using the formula 10^(db/20) to convert from decibels to multipliers */
-    static const int thresh_mults[] = {
-        48,
-        35,    // 1khz
+    static const long thresh_mults[] = {
+        54,
+        46,    // 1khz
         28,    // 2khz
         16,    // 3khz
         17,    // 4khz
-        25,    // 5khz
-        40,    // 6khz
-        67,    // 7khz
-        100,   // 8khz
-        134,   // 9khz
-        160,   // 10khz
-        151,   // 11khz
-        134,   // 12khz
-        127,   // 13khz
-        133,   // 14khz
-        142,   // 15khz
-        179,   // 16khz
-        253,   // 17khz
-        450,   // 18khz
-        1132,  // 19khz
-        4019,  // 20khz
-        16000, // 21khz
-        50596, // 22khz
-        64000,
+        27,    // 5khz
+        55,    // 6khz
+        100,    // 7khz
+        143,   // 8khz
+        161,   // 9khz
+        154,   // 10khz
+        138,   // 11khz
+        124,   // 12khz
+        121,   // 13khz
+        136,   // 14khz
+        191,   // 15khz
+        358,   // 16khz
+        956,   // 17khz
+        3909,   // 18khz
+        26249,  // 19khz
+        310466,  // 20khz
+        6936652,
     };
     /* Frequency response of linear interpolation, sinc^2 */
     static const int mirror_mults[] = {
@@ -551,15 +549,15 @@ static unsigned int vbq_psychoacoustic_model(long *magnitudes, unsigned int samp
 
 
     int multiplier;
-    int max = (22000 * 1024) / samplerate;
-    max = max > 511 ? 511 : max;
+    int max = (20000 * VBQ_FFT_LEN) / samplerate;
+    max = max > VBQ_FFT_HALF - 1 ? VBQ_FFT_HALF - 1 : max;
     int highest = max;
     while (highest) {
-        int freq =(highest * samplerate) / 1000;
-        int lut_pos = freq / 1024;
-        int mix = freq % 1024;
+        int freq = (highest * samplerate) / 1000;
+        int lut_pos = freq / VBQ_FFT_LEN;
+        int mix = freq % VBQ_FFT_LEN;
         multiplier = thresh_mults[lut_pos];
-        multiplier += (mix * (thresh_mults[lut_pos + 1] - multiplier)) / 1024;
+        multiplier += (mix * (thresh_mults[lut_pos + 1] - multiplier)) / VBQ_FFT_LEN;
 
         int threshold = (multiplier * vbq->quality) / 16;
         if (magnitudes[highest] > threshold) {
@@ -573,10 +571,10 @@ static unsigned int vbq_psychoacoustic_model(long *magnitudes, unsigned int samp
     while (i < highest && highest + i < VBQ_FFT_HALF) {
         int mirror = highest + i;
         int freq = (mirror * samplerate) / 1000;
-        int lut_pos = freq / 1024;
-        int mix = freq % 1024;
+        int lut_pos = freq / VBQ_FFT_LEN;
+        int mix = freq % VBQ_FFT_LEN;
         multiplier = thresh_mults[lut_pos];
-        multiplier += (mix * (thresh_mults[lut_pos + 1] - multiplier)) / 1024;
+        multiplier += (mix * (thresh_mults[lut_pos + 1] - multiplier)) / VBQ_FFT_LEN;
 
         int threshold = (multiplier * vbq->quality) / 16;
 
