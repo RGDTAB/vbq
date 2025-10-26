@@ -578,10 +578,10 @@ static unsigned int vbq_psychoacoustic_model(long *magnitudes, unsigned int samp
 
         int threshold = (multiplier * vbq->quality) / 16;
 
-        lut_pos = i / 16;
-        mix = i % 16;
+        lut_pos = (i * 16) / highest;
+        mix = (i * 16) % highest;
         int mirror_scale = mirror_mults[lut_pos];
-        mirror_scale += (mix * (mirror_mults[lut_pos + 1] - mirror_scale)) / 16;
+        mirror_scale += (mix * (mirror_mults[lut_pos + 1] - mirror_scale)) / highest;
         if ((magnitudes[highest - i + 1] * mirror_scale) / 1024 > threshold) {
             highest++;
             i = 0;
