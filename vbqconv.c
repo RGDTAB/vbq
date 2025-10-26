@@ -376,8 +376,8 @@ int main(int argc, char **argv) {
     /* Configure qoa encoder if necessary */
 
     vbq_encoder vbq;
-    vbq.minimum_samplerate = 1;
-    vbq.maximum_samplerate = 1023;
+    vbq.min_sr = 1;
+    vbq.max_sr = 1023;
     vbq.resample = NULL;
     vbq.quality = 32;
     vbq.min_overshoot = 4;
@@ -393,14 +393,18 @@ int main(int argc, char **argv) {
         } else if (QOACONV_STR_SAME(argv[i], "-min_sr")) {
             if (argc >= i + 1) {
                 i++;
-                vbq.minimum_samplerate = atoi(argv[i]);
+                vbq.min_sr = (atoi(argv[i]) * 1024) / desc.samplerate;
+                vbq.min_sr = vbq.min_sr > 1024 ? 1024 : vbq.min_sr;
+                vbq.min_sr = vbq.min_sr < 1 ? 1 : vbq.min_sr;
             } else {
                 QOACONV_ABORT("No amount provided for '%s' parameter", argv[i]);
             }
         } else if (QOACONV_STR_SAME(argv[i], "-max_sr")) {
             if (argc >= i + 1) {
                 i++;
-                vbq.maximum_samplerate = atoi(argv[i]);
+                vbq.max_sr = (atoi(argv[i]) * 1024) / desc.samplerate;
+                vbq.max_sr = vbq.max_sr > 1024 ? 1024 : vbq.max_sr;
+                vbq.max_sr = vbq.max_sr < 1 ? 1 : vbq.max_sr;
             } else {
                 QOACONV_ABORT("No amount provided for '%s' parameter", argv[i]);
             }

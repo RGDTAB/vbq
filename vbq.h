@@ -123,8 +123,8 @@ typedef struct {
 
 typedef struct {
     void (*resample)(const short *, qoa_desc *, unsigned int, unsigned int, unsigned int, short *);
-    unsigned int minimum_samplerate;
-    unsigned int maximum_samplerate;
+    unsigned int min_sr;
+    unsigned int max_sr;
     unsigned int quality;
     unsigned int min_overshoot;
     int extra_overshoot;
@@ -594,7 +594,7 @@ static unsigned int vbq_psychoacoustic_model(long *magnitudes, unsigned int samp
 }
 
 unsigned int vbq_minimum_samplerate(const short *sample_data, qoa_desc *qoa, vbq_encoder *vbq) {
-    unsigned int highest_samplerate = qoa_clamp(vbq->minimum_samplerate, 1, VBQ_FFT_LEN);
+    unsigned int highest_samplerate = qoa_clamp(vbq->min_sr, 1, VBQ_FFT_LEN);
 
     long magnitudes[VBQ_FFT_LEN];
 
@@ -604,7 +604,7 @@ unsigned int vbq_minimum_samplerate(const short *sample_data, qoa_desc *qoa, vbq
         highest_samplerate = channel_samplerate > highest_samplerate ? channel_samplerate : highest_samplerate;
     }
 
-    unsigned int max = qoa_clamp(vbq->maximum_samplerate, 1, VBQ_FFT_LEN);
+    unsigned int max = qoa_clamp(vbq->max_sr, 1, VBQ_FFT_LEN);
     highest_samplerate = highest_samplerate > max ? max : highest_samplerate;
     return highest_samplerate;
 }
@@ -825,8 +825,8 @@ void *vbq_encode(const short *sample_data, qoa_desc *qoa, vbq_encoder *vbq, unsi
         if (!vbq->resample) {
             vbq->resample = &vbq_cubic_resample;
         }
-        if (!vbq->maximum_samplerate) {
-            vbq->maximum_samplerate = VBQ_FFT_LEN;
+        if (!vbq->max_sr) {
+            vbq->max_sr = VBQ_FFT_LEN - 1;
         }
 	    p = vbq_encode_header(qoa, bytes);
         qoa_write_u64((
