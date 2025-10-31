@@ -568,7 +568,7 @@ static unsigned int vbq_psychoacoustic_model(long *magnitudes, unsigned int samp
 
     int i = 1;
     highest += vbq->min_overshoot;
-    while (i < highest && highest + i < VBQ_FFT_HALF) {
+    while (i < highest && highest + i < max) {
         int mirror = highest + i;
         int freq = (mirror * samplerate) / 1000;
         int lut_pos = freq / VBQ_FFT_LEN;
