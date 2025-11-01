@@ -126,8 +126,7 @@ typedef struct {
     unsigned int min_sr;
     unsigned int max_sr;
     unsigned int quality;
-    unsigned int min_overshoot;
-    int extra_overshoot;
+    unsigned int min_oversamp;
 } vbq_encoder;
 
 unsigned int qoa_encode_header(qoa_desc *qoa, unsigned char *bytes);
@@ -567,7 +566,7 @@ static unsigned int vbq_psychoacoustic_model(long *magnitudes, unsigned int samp
     }
 
     int i = 1;
-    highest += vbq->min_overshoot;
+    highest += (highest * vbq->min_oversamp) / 100;
     while (i < highest && highest + i < max) {
         int mirror = highest + i;
         int freq = (mirror * samplerate) / 1000;
@@ -588,7 +587,6 @@ static unsigned int vbq_psychoacoustic_model(long *magnitudes, unsigned int samp
         }
         i++;
     }
-    highest += vbq->extra_overshoot;
 
     return highest * 2;
 }

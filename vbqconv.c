@@ -380,8 +380,7 @@ int main(int argc, char **argv) {
     vbq.max_sr = 1023;
     vbq.resample = NULL;
     vbq.quality = 32;
-    vbq.min_overshoot = 4;
-    vbq.extra_overshoot = 0;
+    vbq.min_oversamp = 20;
     int use_vbr = 1;
     int i;
     for (i = 2; i < argc; i++) {
@@ -415,17 +414,10 @@ int main(int argc, char **argv) {
             } else {
                 QOACONV_ABORT("No amount provided for '%s' parameter", argv[i]);
             }
-        } else if (QOACONV_STR_SAME(argv[i], "-min_overshoot")) {
+        } else if (QOACONV_STR_SAME(argv[i], "-min_oversamp")) {
             if (argc >= i + 1) {
                 i++;
-                vbq.min_overshoot = atoi(argv[i]);
-            } else {
-                QOACONV_ABORT("No amount provided for '%s' parameter", argv[i]);
-            }
-        } else if (QOACONV_STR_SAME(argv[i], "-extra_overshoot")) {
-            if (argc >= i + 1) {
-                i++;
-                vbq.extra_overshoot = atoi(argv[i]);
+                vbq.min_oversamp = atoi(argv[i]);
             } else {
                 QOACONV_ABORT("No amount provided for '%s' parameter", argv[i]);
             }
