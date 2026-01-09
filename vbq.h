@@ -525,27 +525,27 @@ static unsigned int vbq_psychoacoustic_model(long *magnitudes, unsigned int samp
         310466,  // 20khz
         6936652,
     };
-    /* Frequency response of linear interpolation, sinc^2 */
+    /* Frequency response of linear interpolation is sinc^2, but we just use
+     * sinc instead, as that's much better at preventing imaging. */
     static const int mirror_mults[] = {
-        415,
-        364,
-        315,
-        270,
-        227,
-        187,
-        152,
-        120,
-        92,
+        652,
+        611,
+        568,
+        525,
+        482,
+        438,
+        394,
+        351,
+        307,
+        265,
+        223,
+        182,
+        143,
+        104,
         68,
-        49,
-        32,
-        20,
-        11,
-        4,
-        1,
+        33,
         0,
     };
-
 
     int multiplier;
     int max = (20000 * VBQ_FFT_LEN) / samplerate;
