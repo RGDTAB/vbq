@@ -127,6 +127,7 @@ typedef struct {
     unsigned int max_sr;
     unsigned int quality;
     unsigned int min_oversamp;
+    unsigned int prefilter;
 } vbq_encoder;
 
 unsigned int qoa_encode_header(qoa_desc *qoa, unsigned char *bytes);
@@ -652,6 +653,43 @@ void vbq_cubic_resample(const short *sample_data, qoa_desc *qoa, unsigned int vb
     }
 }
 
+
+/* FIR Prefilter from 'Efficient Digital Pre-filtering for Least-Squares Linear
+ * Approximation':  https://doi.org/10.1007/11738695_22 */
+void vbq_prefilter(const short *sample_data, qoa_desc *qoa, unsigned int samples, short *prefilter_buffer) {
+    for (int c = 0; c < qoa->channels; c++) {
+        for (unsigned int s = 0; s < samples; s++) {
+            unsigned int sc = s * qoa->channels + c;
+            if (s > 1 && s < samples - 2) {
+                int z0 = sample_data[sc];
+                z0 *= 1254;
+
+                int z1 = sample_data[sc - qoa->channels];
+                z1 += sample_data[sc + qoa->channels];
+                z1 *= -125;
+
+                int z2 = sample_data[sc - 2 * qoa->channels];
+                z2 += sample_data[sc + 2 * qoa->channels];
+                z2 *= 10;
+
+                prefilter_buffer[sc] = qoa_clamp_s16((z0 + z1 + z2) / 1024);
+
+            } else if (s > 0 && s < samples - 1) {
+                int z0 = sample_data[sc];
+                z0 *= 1274;
+
+                int z1 = sample_data[sc - qoa->channels];
+                z1 += sample_data[sc + qoa->channels];
+                z1 *= -125;
+
+                prefilter_buffer[sc] = qoa_clamp_s16((z0 + z1) / 1024);
+            } else {
+                prefilter_buffer[sc] = sample_data[sc];
+            }
+        }
+    }
+}
+
 unsigned int qoa_encode_frame(const short *sample_data, qoa_desc *qoa, unsigned int frame_len, unsigned char *bytes) {
 	unsigned int channels = qoa->channels;
 
@@ -843,6 +881,7 @@ void *vbq_encode(const short *sample_data, qoa_desc *qoa, vbq_encoder *vbq, unsi
     unsigned int frame_len;
     unsigned int ratios[QOA_FRAME_LEN / VBQ_FFT_LEN];
     short resample_buffer[(QOA_FRAME_LEN + QOA_LMS_LEN) * QOA_MAX_CHANNELS];
+    short prefilter_buffer[(QOA_FRAME_LEN + QOA_LMS_LEN) * QOA_MAX_CHANNELS];
     unsigned int prev_ratio = 0;
 	for (unsigned int sample_index = 0; sample_index < qoa->samples; sample_index += frame_len) {
 		frame_len = qoa_clamp(QOA_FRAME_LEN, 0, qoa->samples - sample_index);
@@ -880,9 +919,18 @@ void *vbq_encode(const short *sample_data, qoa_desc *qoa, vbq_encoder *vbq, unsi
 
             if (max_ratio < VBQ_FFT_LEN) {
                 vbq->resample(frame_samples, qoa, vbr_len, max_ratio, sample_index, resample_buffer);
-                qoa->samplerate = max_ratio;
-                frame_size = qoa_encode_frame(resample_buffer, qoa, vbr_len * max_ratio, bytes + p);
-                qoa->samplerate = base_samplerate;
+
+                if (vbq->prefilter) {
+                    vbq_prefilter(resample_buffer, qoa, vbr_len * max_ratio, prefilter_buffer);
+
+                    qoa->samplerate = max_ratio;
+                    frame_size = qoa_encode_frame(prefilter_buffer, qoa, vbr_len * max_ratio, bytes + p);
+                    qoa->samplerate = base_samplerate;
+                } else {
+                    qoa->samplerate = max_ratio;
+                    frame_size = qoa_encode_frame(resample_buffer, qoa, vbr_len * max_ratio, bytes + p);
+                    qoa->samplerate = base_samplerate;
+                }
             } else {
                 frame_size = qoa_encode_frame(frame_samples, qoa, vbr_len * VBQ_FFT_LEN, bytes + p);
             }

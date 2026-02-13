@@ -381,6 +381,7 @@ int main(int argc, char **argv) {
     vbq.resample = NULL;
     vbq.quality = 32;
     vbq.min_oversamp = 20;
+    vbq.prefilter = 1;
     int use_vbr = 1;
     int i;
     for (i = 2; i < argc; i++) {
@@ -437,6 +438,8 @@ int main(int argc, char **argv) {
             } else {
                 QOACONV_ABORT("No amount provided for '%s' parameter", argv[i]);
             }
+        } else if (QOACONV_STR_SAME(argv[i], "-no_prefilter")) {
+            vbq.prefilter = 0;
         } else {
             QOACONV_ABORT("Unknown parameter %s", argv[i]);
         }
